@@ -16,7 +16,7 @@ RUN test -n "$BRANCH" && test -n "$VERSION"
 RUN apk add --no-cache patch
 
 # get and extract source from git
-ADD https://github.com/Radarr/Radarr.git#$BRANCH ./
+ADD https://github.com/Radarr/Radarr.git#v$VERSION ./
 
 # apply available patches
 COPY patches ./
