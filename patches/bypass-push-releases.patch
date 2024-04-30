@@ -2,15 +2,31 @@ bypass can skip preferred protocol for pushed releases (from autobrr)
 
 --- a/src/NzbDrone.Core/DecisionEngine/DownloadDecisionMaker.cs
 +++ b/src/NzbDrone.Core/DecisionEngine/DownloadDecisionMaker.cs
-@@ -67,6 +67,7 @@
+@@ -67,6 +67,23 @@
              }
 
              var reportNumber = 1;
 +            var source = pushedRelease ? ReleaseSourceType.ReleasePush : ReleaseSourceType.Rss;
++
++            if (searchCriteria != null)
++            {
++                if (searchCriteria.InteractiveSearch)
++                {
++                    source = ReleaseSourceType.InteractiveSearch;
++                }
++                else if (searchCriteria.UserInvokedSearch)
++                {
++                    source = ReleaseSourceType.UserInvokedSearch;
++                }
++                else
++                {
++                    source = ReleaseSourceType.Search;
++                }
++            }
 
              foreach (var report in reports)
              {
-@@ -82,6 +83,7 @@
+@@ -82,6 +99,7 @@
                      {
                          var remoteMovie = _parsingService.Map(parsedMovieInfo, report.ImdbId.ToString(), report.TmdbId, searchCriteria);
                          remoteMovie.Release = report;
@@ -18,7 +34,7 @@ bypass can skip preferred protocol for pushed releases (from autobrr)
 
                          if (remoteMovie.Movie == null)
                          {
-@@ -118,7 +120,8 @@
+@@ -118,7 +136,8 @@
                              {
                                  Release = report,
                                  ParsedMovieInfo = parsedMovieInfo,
@@ -28,15 +44,44 @@ bypass can skip preferred protocol for pushed releases (from autobrr)
                              };
 
                              decision = new DownloadDecision(remoteMovie, new Rejection("Unable to parse release"));
-@@ -137,8 +140,6 @@
+@@ -129,7 +148,11 @@
+                 {
+                     _logger.Error(e, "Couldn't process release.");
+
+-                    var remoteMovie = new RemoteMovie { Release = report };
++                    var remoteMovie = new RemoteMovie
++                    {
++                        Release = report,
++                        ReleaseSource = source
++                    };
+                     decision = new DownloadDecision(remoteMovie, new Rejection("Unexpected error processing release"));
+                 }
+
+@@ -137,24 +160,6 @@
 
                  if (decision != null)
                  {
 -                    var source = pushedRelease ? ReleaseSourceType.ReleasePush : ReleaseSourceType.Rss;
 -
-                     if (searchCriteria != null)
-                     {
-                         if (searchCriteria.InteractiveSearch)
+-                    if (searchCriteria != null)
+-                    {
+-                        if (searchCriteria.InteractiveSearch)
+-                        {
+-                            source = ReleaseSourceType.InteractiveSearch;
+-                        }
+-                        else if (searchCriteria.UserInvokedSearch)
+-                        {
+-                            source = ReleaseSourceType.UserInvokedSearch;
+-                        }
+-                        else
+-                        {
+-                            source = ReleaseSourceType.Search;
+-                        }
+-                    }
+-
+                     decision.RemoteMovie.ReleaseSource = source;
+
+                     if (decision.Rejections.Any())
 --- a/src/NzbDrone.Core/DecisionEngine/Specifications/RssSync/DelaySpecification.cs
 +++ b/src/NzbDrone.Core/DecisionEngine/Specifications/RssSync/DelaySpecification.cs
 @@ -44,6 +44,7 @@
