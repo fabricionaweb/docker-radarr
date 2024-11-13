@@ -19,7 +19,7 @@ RUN find ./ -name "*.patch" -print0 | sort -z | xargs -t -0 -n1 patch -p1 -i
 FROM base AS build-frontend
 
 # dependencies
-RUN apk add --no-cache nodejs yarn
+RUN apk add --no-cache yarn
 
 # node_modules
 COPY --from=source /src/package.json /src/yarn.lock /src/tsconfig.json ./
