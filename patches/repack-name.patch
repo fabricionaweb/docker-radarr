@@ -1,0 +1,16 @@
+add Repack revision for renaming instead of just Proper
+
+--- a/src/NzbDrone.Core/Organizer/FileNameBuilder.cs
++++ b/src/NzbDrone.Core/Organizer/FileNameBuilder.cs
+@@ -613,6 +613,11 @@ private string ReplaceNumberToken(string token, int value)
+
+         private string GetQualityProper(Movie movie, QualityModel quality)
+         {
++            if (quality.Revision.IsRepack)
++            {
++                return string.Format("Repack{0}", quality.Revision.Version < 3 ? "" : quality.Revision.Version - 1);
++            }
++
+             if (quality.Revision.Version > 1)
+             {
+                 return "Proper";
